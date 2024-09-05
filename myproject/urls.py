@@ -16,9 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from myapp.views import myfirstview
+from myapp.views import myfirstview, mysecondview, invoiceview
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('prueba/', myfirstview)
+    path('prueba/', myfirstview, name='vista1'),
+    path('dos/', mysecondview, name='vista2'),
+    path('invoice/', invoiceview, name='vista3')
 ]
