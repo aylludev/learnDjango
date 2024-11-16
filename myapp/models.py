@@ -1,14 +1,18 @@
 from django.db import models
-from datetime import datetime
+from django.forms import model_to_dict
 
 # Create your models here.
 
 class Category(models.Model):
-    name = models.CharField(max_length=150, verbose_name='Categoria',unique=True)
+    name = models.CharField(max_length=150, verbose_name='Nombre',unique=True)
 
     def __str__(self):
         return self.name
     
+    def toJSON(self):
+        item = model_to_dict(self)
+        return item
+
     class Meta:
         verbose_name = 'Categoria'
         verbose_name_plural = 'Categorias'
@@ -16,7 +20,7 @@ class Category(models.Model):
         ordering = ['id']
 
 class Product(models.Model):
-    id_pro = models.CharField(primary_key=True, max_length=10, unique=True, verbose_name='Id_producto')
+    id_pro = models.CharField(primary_key=True, max_length=15, unique=True, verbose_name='id_pro')
     name = models.CharField(max_length=150, verbose_name='Nombre',unique=True)
     cate = models.ForeignKey(Category,on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product/%Y/%m/%d', null=True, blank=True)
@@ -33,7 +37,7 @@ class Product(models.Model):
         ordering = ['id_pro']
 
 class Client(models.Model):
-    id_cli = models.CharField(primary_key=True, max_length=10, unique=True, verbose_name='Cedula')
+    id_cli = models.CharField(primary_key=True, max_length=15, unique=True, verbose_name='Cedula')
     names = models.CharField(max_length=150, verbose_name='Nombres')
     lastnames = models.CharField(max_length=150, verbose_name='Apellidos')
     date_nac= models.DateTimeField(auto_now=True)
@@ -51,8 +55,8 @@ class Client(models.Model):
         ordering= ['id_cli']
 
 class Sale(models.Model):
-    id_sale = models.CharField(primary_key=True, max_length=10, unique=True, verbose_name='Id_venta')
-    id_cli = models.ForeignKey(Client, on_delete=models.CASCADE)
+    id_sale = models.CharField(primary_key=True, max_length=150, unique=True, verbose_name='Id_venta')
+    id_cli = models.ForeignKey(Client, max_length=15, on_delete=models.CASCADE)
     date_sale= models.DateTimeField(auto_now=True)
     subtotal = models.FloatField()
     iva = models.FloatField()
@@ -69,9 +73,9 @@ class Sale(models.Model):
         ordering= ['id_sale']
 
 class DetSale(models.Model):
-    id_det = models.CharField(primary_key=True, max_length=10, unique=True, verbose_name='Id_venta')
-    id_sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
-    id_pro = models.CharField(Product)
+    id_det = models.CharField(primary_key=True, max_length=15, unique=True, verbose_name='Id_venta')
+    id_sale = models.ForeignKey(Sale, max_length=15, on_delete=models.CASCADE)
+    id_pro = models.CharField(Product, max_length=15)
     quanty = models.FloatField()
     price = models.FloatField()
     subtotal = models.FloatField()    
