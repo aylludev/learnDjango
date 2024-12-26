@@ -1,6 +1,5 @@
 {% extends 'body.html' %}
 {% load widget_tweaks %}
-
 {% block content %}
     <form method="post" action=".">
         <div class="card card-default">
@@ -12,26 +11,27 @@
             </div>
             <div class="card-body">
                 {% csrf_token %}
-                <input type="hidden" name="action" value="{{  action }}">
+                <input type="hidden" name="action" value="{{ action }}">
                 {% if form.errors %}
                     <div class="alert alert-danger alert-dismissible">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
-                        <h5><i class="icon fas fa-ban"></i>Ha ocurrido un error durante el guardado del registro. </h5>
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        <h5><i class="icon fas fa-ban"></i> Ha ocurrido un error al querer guardar el registro</h5>
                         <ul>
                             {% for field in form %}
                                 {% for error in field.errors %}
-                                    <li>{{error}}</li>
+                                    <li>{{ error }}</li>
                                 {% endfor %}
                             {% endfor %}
                         </ul>
                     </div>
                 {% endif %}
-                {% for field in form.visible_fields  %}
+
+                {% for field in form.visible_fields %}
                     <div class="form-group">
-                        <label for="email">{{field.label}}:</label>
+                        <label for="email">{{ field.label }}:</label>
                         {{ field|add_class:'form-control'|attr:'autocomplete:off' }}
                     </div>
-                {% endfor %}    
+                {% endfor %}
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-flat">
@@ -45,41 +45,36 @@
             var errors = '';
             {% for field in form %}
                 {% for error in field.errors %}
-                    errors += '{{error}}\n';
+                    errors += '{{ error }}\n';
                 {% endfor %}
             {% endfor %}
             Swal.fire({
-                icon: "error",
-                title: "Oops...",
-                text: "Something went wrong!",
-                footer: '<a href="#">Why do I have this issue?</a>'
-            });
-            Swal.fire({
-                title: 'Error',
+                title: 'Error!',
                 text: errors,
-                icon: 'error',
+                icon: 'error'
             });
         {% endif %}
 
-        $('form').on('submit', function (e){
-          e.preventDefault();
-          var parameters = $(this).serializeArray();
-          $.ajax({
-            url: '{% url 'erp:category_create' %}',
-            type: 'POST',
-            data: parameters,
-            dataType: 'json'
-          }).done(function (data) {
-            if(!data.hasOwnProperty('error')){
-              Location.href = '{{ list_url }}';
-              return false;
-            }
-            message_error(data.error);
-          }).fail(function (jqXHR, textStatus, errorThrown) {
-              alert(textStatus+': '+errorThrown);
-          }).always(function (data) {
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+            var parameters = $(this).serializeArray();
+            $.ajax({
+                url: window.location.pathname,
+                type: 'POST',
+                data: parameters,
+                dataType: 'json'
+            }).done(function (data) {
+                console.log(data);
+                if (!data.hasOwnProperty('error')) {
+                    location.href = '{{ list_url }}';
+                    return false;
+                }
+                message_error(data.error);
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert(textStatus + ': ' + errorThrown);
+            }).always(function (data) {
 
-          });
+            });
         });
     </script>
 {% endblock %}
