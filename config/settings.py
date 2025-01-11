@@ -119,4 +119,4 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-LOGIN_REDIRECT_URL = 'erp:category_list'
+LOGIN_REDIRECT_URL = '/erp/category/list/'
