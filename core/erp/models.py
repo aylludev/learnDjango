@@ -1,8 +1,9 @@
-from django.db import models
 from datetime import datetime
 
+from django.db import models
 from django.forms import model_to_dict
 
+from config import settings
 from core.erp.choices import gender_choices
 
 
@@ -25,12 +26,26 @@ class Category(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=150, verbose_name='Nombre', unique=True)
-    cate = models.ForeignKey(Category, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='product/%Y/%m/%d', null=True, blank=True)
-    pvp = models.DecimalField(default=0.00, max_digits=9, decimal_places=2)
+    cat = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Categoría')
+    image = models.ImageField(upload_to='product/%Y/%m/%d', null=True, blank=True, verbose_name='Imagen')
+    stock = models.IntegerField(default=0, verbose_name='Stock')
+    pvp = models.DecimalField(default=0.00, max_digits=9, decimal_places=2, verbose_name='Precio de venta')
 
     def __str__(self):
         return self.name
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        item['full_name'] = '{} / {}'.format(self.name, self.cat.name)
+        item['cat'] = self.cat.toJSON()
+        item['image'] = self.get_image()
+        item['pvp'] = format(self.pvp, '.2f')
+        return item
+
+    def get_image(self):
+        if self.image:
+            return '{}{}'.format(settings.MEDIA_URL, self.image)
+        return '{}{}'.format(settings.STATIC_URL, 'img/empty.png')
 
     class Meta:
         verbose_name = 'Producto'
@@ -42,12 +57,22 @@ class Client(models.Model):
     names = models.CharField(max_length=150, verbose_name='Nombres')
     surnames = models.CharField(max_length=150, verbose_name='Apellidos')
     dni = models.CharField(max_length=10, unique=True, verbose_name='Dni')
-    birthday = models.DateField(default=datetime.now, verbose_name='Fecha de nacimiento')
+    date_birthday = models.DateField(default=datetime.now, verbose_name='Fecha de nacimiento')
     address = models.CharField(max_length=150, null=True, blank=True, verbose_name='Dirección')
-    sexo = models.CharField(max_length=10, choices=gender_choices, default='male', verbose_name='Sexo')
+    gender = models.CharField(max_length=10, choices=gender_choices, default='male', verbose_name='Sexo')
 
     def __str__(self):
-        return self.names
+        return self.get_full_name()
+
+    def get_full_name(self):
+        return '{} {} / {}'.format(self.names, self.surnames, self.dni)
+
+    def toJSON(self):
+        item = model_to_dict(self)
+        item['gender'] = {'id': self.gender, 'name': self.get_gender_display()}
+        item['date_birthday'] = self.date_birthday.strftime('%Y-%m-%d')
+        item['full_name'] = self.get_full_name()
+        return item
 
     class Meta:
         verbose_name = 'Cliente'
@@ -65,6 +90,33 @@ class Sale(models.Model):
     def __str__(self):
         return self.cli.names
 
+    def toJSON(self):
+        item = model_to_dict(self)
+        item['cli'] = self.cli.toJSON()
+        item['subtotal'] = format(self.subtotal, '.2f')
+        item['iva'] = format(self.iva, '.2f')
+        item['total'] = format(self.total, '.2f')
+        item['date_joined'] = self.date_joined.strftime('%Y-%m-%d')
+        item['det'] = [i.toJSON() for i in self.detsale_set.all()]
+        return item
+
+    def delete(self, using=None, keep_parents=False):
+        for det in self.detsale_set.all():
+            det.prod.stock += det.cant
+            det.prod.save()
+        super(Sale, self).delete()
+
+    def calculate_invoice(self):
+        subtotal = 0.00
+        for d in self.detsale_set.all():
+            d.subtotal = float(d.price) * int(d.cant)
+            d.save()
+            subtotal += d.subtotal
+        self.subtotal = subtotal
+        self.iva = self.subtotal * float(0.12)
+        self.total = float(self.subtotal) + float(self.iva)
+        self.save()
+
     class Meta:
         verbose_name = 'Venta'
         verbose_name_plural = 'Ventas'
@@ -80,6 +132,13 @@ class DetSale(models.Model):
 
     def __str__(self):
         return self.prod.name
+
+    def toJSON(self):
+        item = model_to_dict(self, exclude=['sale'])
+        item['prod'] = self.prod.toJSON()
+        item['price'] = format(self.price, '.2f')
+        item['subtotal'] = format(self.subtotal, '.2f')
+        return item
 
     class Meta:
         verbose_name = 'Detalle de Venta'

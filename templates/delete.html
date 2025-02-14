@@ -27,14 +27,14 @@
                 {% endif %}
                 <div class="alert alert-danger alert-dismissible">
                     <h5><i class="icon fas fa-ban"></i> Notificación!</h5>
-                    ¿Estas seguro de eliminar el registro nro {{ object.id }}?
+                    ¿Estas seguro de eliminar el registro N°{{ object.id }}?
                 </div>
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-flat">
                     <i class="fas fa-save"></i> Si, aceptar
                 </button>
-                <a href="{{ list_url }}" class="btn btn-info btn-flat">
+                <a href="{{ list_url }}" class="btn btn-danger btn-flat">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
             </div>
@@ -43,23 +43,19 @@
     <script>
         $('form').on('submit', function (e) {
             e.preventDefault();
-            var parameters = $(this).serializeArray();
-            $.ajax({
-                url: window.location.pathname,
-                type: 'POST',
-                data: parameters,
-                dataType: 'json'
-            }).done(function (data) {
-                console.log(data);
-                if (!data.hasOwnProperty('error')) {
-                    location.href = '{{ list_url }}';
-                    return false;
-                }
-                message_error(data.error);
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                alert(textStatus + ': ' + errorThrown);
-            }).always(function (data) {
+            var parameters = new FormData(this);
+            submit_with_ajax(window.location.pathname, 'Notificación', '¿Estas seguro de eliminar el siguiente registro?', parameters, function () {
+                Swal.fire({
+                    title: 'Alerta',
+                    text: 'Registro eliminado correctamente',
+                    icon: 'success',
+                    timer: 2000,
+                    onClose: () => {
+                        location.href = '{{ list_url }}';
+                    }
+                }).then((result) => {
 
+                });
             });
         });
     </script>

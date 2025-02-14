@@ -10,10 +10,13 @@ $(function () {
             data: {
                 'action': 'searchdata'
             },
-            dataSrc: ""
+            dataSrc: "",
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
         },
         columns: [
-            {"data": "id"},
+            {"data": "position"},
             {"data": "name"},
             {"data": "desc"},
             {"data": "desc"},
